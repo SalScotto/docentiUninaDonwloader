@@ -8,6 +8,8 @@ import json
 from urllib3 import disable_warnings
 #Used for making the dirTree (make dir function)
 import os
+#Used for arguments management
+import argparse
 
 #Object used to save the requests session cookies
 session = requests.session()
@@ -154,8 +156,16 @@ def todo():
     print(docenti, corsi)
 
 
+#TODO: fix lambda function
+validate = lambda s: '' if s is None else s
+
 #TODO: Add argument-based input
 def main(argv):
+    username = validate(argv.u)
+    password = validate(argv.p)
+    startingFolderID = validate(argv.c)
+    docente = validate(argv.d)
+    baseFolder = validate(argv.f)
     #If needed parameters are not set, stop code execution
     if(len(username) is 0 or len(password) is 0 or len(startingFolderID) is 0 or len(docente) is 0 or len(baseFolder) is 0):
         print("Parametri non settati")
@@ -165,4 +175,11 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    main(None)
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-u')
+    parser.add_argument('-p')
+    parser.add_argument('-f')
+    parser.add_argument('-d')
+    parser.add_argument('-c')
+    args = parser.parse_args()
+    main(args)
