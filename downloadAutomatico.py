@@ -161,11 +161,11 @@ validate = lambda s: '' if s is None else s
 
 #TODO: Add argument-based input
 def main(argv):
-    username = validate(argv.u)
-    password = validate(argv.p)
-    startingFolderID = validate(argv.c)
-    docente = validate(argv.d)
-    baseFolder = validate(argv.f)
+    username = validate(argv.user)
+    password = validate(argv.password)
+    startingFolderID = validate(argv.corso)
+    docente = validate(argv.docente)
+    baseFolder = validate(argv.path)
     #If needed parameters are not set, stop code execution
     if(len(username) is 0 or len(password) is 0 or len(startingFolderID) is 0 or len(docente) is 0 or len(baseFolder) is 0):
         print("Parametri non settati")
@@ -175,11 +175,11 @@ def main(argv):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser()
-    parser.add_argument('-u')
-    parser.add_argument('-p')
-    parser.add_argument('-f')
-    parser.add_argument('-d')
-    parser.add_argument('-c')
+    parser = argparse.ArgumentParser(prog="Docenti Unina Donwloader",usage="TODO")
+    parser.add_argument('-u', '--user', dest="User", help="Username per l'accesso su docenti.unina.it", type=str, required=True)
+    parser.add_argument('-p', '--password', dest="Password", help="Password per l'accesso", type=str, required=True)
+    parser.add_argument('-f', '--folder', dest="Path", help="Percorso della cartella dove scaricare i file (Default: %(default)s)", type=str, default=".", required=False)
+    parser.add_argument('-d', '--docente', dest="Docente", help="Id del docente associato al corso", type=str, required=True)
+    parser.add_argument('-c', '--corso', dest="Corso", help="Id del corso associato al materiale didattico o della relativa cartella", type=str, required=True)
     args = parser.parse_args()
     main(args)
