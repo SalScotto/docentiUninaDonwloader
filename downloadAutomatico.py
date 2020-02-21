@@ -1,4 +1,5 @@
 #!/usr/bin/python3
+# -*- coding: utf-8 -*-
 
 #Used for http requests
 import requests
@@ -11,175 +12,96 @@ import os
 #Used for arguments management
 import argparse
 
-#Object used to save the requests session cookies
-session = requests.session()
+#WIP:
+from secret import Secret
+notStr = lambda s: (type(s) != str)
+validate = lambda s: '' if s is None else s
+alternativeTyped = lambda a,b,c: a if (a is not None and type(a) is c) else b
+alternative = lambda a,b: a if (a is not None) else b
 
-#Set Username and Password of your user, needed to verify that you're enabled to open it's private folders
-username = ""
-password = ""
-
-#For hiding ssl-related warnings
 disable_warnings()
 
-#Name of the base folder where to recreate the directory tree
-baseFolder = ""
-#Starting id of the folder to download,:last bit of the url, before get patameters)
-startingFolderID = ""
+#TODO: Try-catch everything!!
+class Downloader:
 
-#ID of the professor, got from the url as from below
-docente = ""
+    docente = None
+    insegnamento = None
+    materiale = None
+    status = None
 
-endUrl = "?codIns="
-#Url structured used for the requests
-baseUrl = "https://www.docenti.unina.it:443/webdocenti-be/docenti/"+str(docente)+"/materiale-didattico/areapubb/"
+    def __init__(self, _user, _passwd, _path):
+        self.user = _user
+        self.passwd = _passwd
+        self.basePath = _path
+        self.session = requests.session()
+        self.cookies = {}
+        self.baseUrl = "https://www.docenti.unina.it:443/webdocenti-be"
+        self.headers = {"User-Agent": "Mozilla/5.0 (X11; rv:70.0) Firefox/70.0", "Accept": "application/json, text/plain, */*", "Accept-Encoding": "gzip, deflate", "Content-Type": "application/json;charset=utf-8", "Origin": "https://www.docenti.unina.it", "Connection": "close", "Referer": "https://www.docenti.unina.it/"}
 
-#Check for existing directory, if it doesn't, it will create all the tree
-def checkDir(path):
-    print("Verifico",path)
-    if not os.path.exists(path):
-        print("Creo", path)
-        os.makedirs(path)
-
-#Download the given file, knowing both its name, id and save path
-def scaricaFile(nome,id, path = ""):
-    #Creating the full url neded to download the file
-    fileUrl = "https://www.docenti.unina.it:443/webdocenti-be/allegati/materiale-didattico/"+str(id)
-    #Get the file content
-    fileContent = session.get(fileUrl, headers = burp0_headers)
-    pathFile = baseFolder + str(path)
-    #Create the full directory path if needed
-    checkDir(pathFile)
-    #Write the file content in its path
-    open(str(pathFile)+"/"+str(nome),"wb").write(fileContent.content)
-    print("File",nome,"scaricato")
-
-#Crawling recursively the given directory and all its subfolder, downloading contained files
-def navigaDirectory(id, nome, pathCorrente = ""):
-    #Current crawled path
-    path = pathCorrente + "/" + nome
-    urlDirectory = baseUrl + str(id) + endUrl
-    #Get the path content
-    response = session.get(urlDirectory, headers = burp0_headers, verify = False)
-    #Load the json response
-    dirContent = json.loads(response.text)
-    #For each element in the directory
-    for item in dirContent['contenutoCartella']:
-        if item['tipo'] is 'D':
-            #If it's a directory, open it and download its content
-            print("Entro nella cartella ", item["nome"], "@", item["id"])
-            navigaDirectory(item["id"], item["nome"], path)
-        else:
-            #If it's a file, download it
-            print("In", id, "File", item["nome"], "@", item["id"], "#", item["tipo"])
-            scaricaFile(item["nome"],item["id"], path)
-
-#Base URL fot the login
-burp0_url = "https://www.docenti.unina.it:443/webdocenti-be/auth/login-post"
-#Starting session cookies
-burp0_cookies = {}
-#Headers needed in order to fool the browser check and create valid requests
-burp0_headers = {"User-Agent": "Mozilla/5.0 (X11; rv:70.0) Firefox/70.0", "Accept": "application/json, text/plain, */*", "Accept-Encoding": "gzip, deflate", "Content-Type": "application/json;charset=utf-8", "Origin": "https://www.docenti.unina.it", "Connection": "close", "Referer": "https://www.docenti.unina.it/"}
-#Login parameters request
-burp0_json={"password": password, "username": username}
-#Requesto to do the login
-r1 = session.post(burp0_url, headers=burp0_headers, cookies=burp0_cookies, json=burp0_json, verify=False)
-
-
-def crawler():
-    #Starting url for the crawler
-    burp0_url = baseUrl+str(startingFolderID)+endUrl
-    #Get the first folder content
-    r = session.get(burp0_url, headers=burp0_headers)
-    dirTree = json.loads(r.text)
-    #Same as navigaDirectory (then why I've made different functions? idk)
-    if dirTree['directory'] is True:
-        for item in dirTree['contenutoCartella']:
-            if item['tipo'] is 'D':
-                print("Entro nella cartella ", item["nome"], "@", item["id"])
-                navigaDirectory(item["id"], item["nome"])
-            else:
-                print("Il file",item["nome"], "ha id", item["id"])
-                scaricaFile(item["nome"],item["id"], "")
-    else:
-        #You gave me a wrong identifier
-        print("startingFolderID può essere solo l'identificativo di una cartella per il quale hai i diritti di accesso")
-
-
-#TODO: check if the login is valid
-#TODO: check if the user has the right to access the "startingFolder" course
-#TODO: Search for Course code and Professor Code
-
-def todo():
-    nome = ""
-    burp0_url = "https://www.docenti.unina.it:443/webdocenti-be/docenti?nome="+str(nome)
-    res = session.get(burp0_url, headers=burp0_headers)
-    docenti = json.loads(res.text)
-    """
-    Struttura risposta:
-    public class Docente {
-        public String id;
-        public String nome;
-        public String cognome;
-        public String dipartimento;
-        public String codicefiscale;
-    }
-
-    public class Risposta {
-        public List<Docente> docenti;
-        public boolean last;
-        public int totalElements;
-        public int totalPages;
-        public object sort;
-        public int numberOfElements;
-        public boolean first;
-        public int size;
-        public int number;
-    }
-    """
-
-    burp0_url = "https://www.docenti.unina.it:443/webdocenti-be/docenti/"+str(docente)+"/materiale-didattico/areapubb/?codIns="
-    response = session.get(burp0_url, headers=burp0_headers)
-    corsi = json.loads(response.text)
-    """
-    Risposta; List<Corso>
-    public class Corso {
-        public String nome;
-        public int id;
-        public boolean pubblica;
-        public boolean libera;
-        public String tipo;
-        public String percorso;
-        public boolean cancella;
-        public String codInse;
-    }
-    """
-    print(docenti, corsi)
-
-
-#TODO: fix lambda function
-validate = lambda s: '' if s is None else s
-
-#TODO: Add argument-based input
-def main(argv):
-    username = validate(argv.user)
-    password = validate(argv.password)
-    startingFolderID = validate(argv.corso)
-    docente = validate(argv.docente)
-    baseFolder = validate(argv.path)
-    #If needed parameters are not set, stop code execution
-    if(len(username) is 0 or len(password) is 0 or len(startingFolderID) is 0 or len(docente) is 0 or len(baseFolder) is 0):
-        print("Parametri non settati")
-        exit(2)
+    def __getUrl(self, doc: str, fold: str, codIns: str = "") -> str:
+        if notStr(doc) or notStr(fold) or notStr(codIns):
+            raise TypeError
+        return "{}/docenti/{}/materiale-didattico/{}?codIns={}".format(self.baseUrl, doc, fold, codIns)
     
-    crawler()
+    def __getDownloadUrl(self, folderID):
+        return self.__getUrl(self.docente, folderID, self.insegnamento)
 
+    def login(self):
+        loginUrl = self.baseUrl+"/auth/login-post"
+        requestBody = {"username": self.user, "password": self.passwd}
+        req = self.session.post(loginUrl, headers=self.headers, cookies=self.cookies, json=requestBody, verify=False)
+        self.status = req.status_code
+        return req.status_code
+    
+    def __createDirectory(self, path):
+        if not os.path.exists(path):
+            os.makedirs(path)
+    
+    def __downloadFile(self, fileID, filename, downloadPath = ""):
+        fileUrl = self.baseUrl+"/allegati/materiale-didattico/{}".format(fileID)
+        fileContent = self.session.get(fileUrl, headers = self.headers)
+        filePath = self.basePath + str(downloadPath)
+        self.__createDirectory(filePath)
+        open("{}/{}".format(filePath, filename), "wb").write(fileContent.content)
+    
+    def __getDirName(self, dirID, docente, corso = ""):
+        url = "{}/docenti/{}/materiale-didattico/areapubb/{}?codIns?{}".format(self.baseUrl,docente,dirID,corso)
+        resposne = self.session.get(url, headers = self.headers)
+        respValues = json.loads(resposne.text)
+        dirName = respValues['percorso'][1:]
+        return dirName
+
+    def __parseDirectory(self, dirID, dirName, currentPath = ""):
+        path = "{}/{}".format(currentPath, dirName)
+        dirUrl = self.__getDownloadUrl(dirID)
+        response = self.session.get(dirUrl, headers = self.headers, verify = False)
+        jsonResponse = json.loads(response.text)
+        if jsonResponse['directory'] is False:
+            print("{}:{} is not a Folder".format(dirID, dirName))
+            return
+        directoryContent = jsonResponse['contenutoCartella']
+        for item in directoryContent:
+            if item['tipo'] is 'D':
+                self.__parseDirectory(item['id'], item['nome'], path)
+            else:
+                self.__downloadFile(item['id'], item['nome'], path)
+
+    def crawler(self, _docente: str, _materiale: str, _corso: str = ""):
+        self.docente = _docente
+        self.insegnamento = _corso
+        self.materiale = _materiale
+        attempts = 3
+        while(self.status != 200 or attempts > 0):
+            attempts -= 1
+            self.login()
+        if(attempts <= 0):
+            exit(3)
+        nomeCorso = self.__getDirName(self.materiale, self.docente, self.insegnamento)
+        self.__parseDirectory(self.materiale, nomeCorso, self.basePath)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(prog="Docenti Unina Donwloader",usage="TODO")
-    parser.add_argument('-u', '--user', dest="User", help="Username per l'accesso su docenti.unina.it", type=str, required=True)
-    parser.add_argument('-p', '--password', dest="Password", help="Password per l'accesso", type=str, required=True)
-    parser.add_argument('-f', '--folder', dest="Path", help="Percorso della cartella dove scaricare i file (Default: %(default)s)", type=str, default=".", required=False)
-    parser.add_argument('-d', '--docente', dest="Docente", help="Id del docente associato al corso", type=str, required=True)
-    parser.add_argument('-c', '--corso', dest="Corso", help="Id del corso associato al materiale didattico o della relativa cartella", type=str, required=True)
-    args = parser.parse_args()
-    main(args)
+    u = Secret.username
+    p = Secret.password
+    scaricatoreDiPorti = Downloader(u, p, "testDev")
+    r = scaricatoreDiPorti.login()
+    print(r)

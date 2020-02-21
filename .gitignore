@@ -123,8 +123,10 @@ dmypy.json
 .pyre/
 
 ### VisualStudioCode ###
+#,vscode
+.vscode
 .vscode/*
-!.vscode/settings.json
+#!.vscode/settings.json
 !.vscode/tasks.json
 !.vscode/launch.json
 !.vscode/extensions.json
@@ -149,6 +151,7 @@ venv.bak/
 pip-selfcheck.json
 
 # Development
-dev.py
+dev*.py
+secret.py
 
 # End of https://www.gitignore.io/api/linux,python,visualstudiocode,venv
