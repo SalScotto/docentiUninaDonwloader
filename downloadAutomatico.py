@@ -20,7 +20,7 @@ alternativeTyped = lambda a,b,c: a if (a is not None and type(a) == c) else b
 alternative = lambda a,b: a if (a is not None) else b
 
 disable_warnings()
-from pprint import pprint
+
 #TODO: Try-catch everything!!
 class Downloader:
 
@@ -47,7 +47,6 @@ class Downloader:
         requestBody = {"username": self.user, "password": self.passwd}
         req = self.session.post(loginUrl, headers=self.headers, cookies=self.cookies, json=requestBody, verify=False)
         self.status = req.status_code
-        print(req.status_code)
         if req.status_code == 401:
             print("Credenziali errate")
             exit(5)
@@ -63,7 +62,7 @@ class Downloader:
     def __downloadFile(self, fileID, filename, downloadPath = ""):
         fileUrl = self.baseUrl+"/allegati/materiale-didattico/{}".format(fileID)
         fileContent = self.session.get(fileUrl, headers = self.headers)
-        filePath = str(downloadPath) #self.basePath + 
+        filePath = str(downloadPath)
         self.__createDirectory(filePath)
         open("{}/{}".format(filePath, filename), "wb").write(fileContent.content)
     
@@ -84,8 +83,7 @@ class Downloader:
 
     def __parseDirectory(self, dirID, dirName, currentPath = ""):
         path = "{}/{}".format(currentPath, dirName)
-        dirUrl = self.__getDownloadUrl(dirID, True)
-        print(dirUrl)
+        dirUrl = self.__getDownloadUrl(dirID)
         response = self.session.get(dirUrl, headers = self.headers, verify = False)
         jsonResponse = json.loads(response.text)
         if jsonResponse['directory'] == False:
