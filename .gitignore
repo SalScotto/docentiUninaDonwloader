@@ -152,6 +152,7 @@ pip-selfcheck.json
 
 # Development
 dev*.py
-secret.py
+testDev*
+clean.sh
 
 # End of https://www.gitignore.io/api/linux,python,visualstudiocode,venv
